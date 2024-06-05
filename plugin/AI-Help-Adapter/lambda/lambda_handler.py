@@ -65,7 +65,7 @@ def convertRequest(requestParams, multiround=True):
 def generateAnswer(convertedRequest) -> requests.Response :
     
     response = lambda_client.invoke(
-        FunctionName='arn:aws:lambda:us-west-2:715371302281:function:Ask_Assistant',
+        FunctionName=ASK_ASSISTANT_FUNC_ARN,
         InvocationType='RequestResponse',
         Payload=json.dumps(convertedRequest).encode('utf-8') # 传递给另一个 Lambda 函数的参数
     )
