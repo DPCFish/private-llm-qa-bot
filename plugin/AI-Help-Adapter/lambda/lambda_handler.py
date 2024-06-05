@@ -3,11 +3,12 @@ import time
 import random
 import string
 import re
-import logging
+import logging 
 import requests
 import json
 import os
 import hashlib
+import boto3
 from collections import OrderedDict
 
 
@@ -23,10 +24,10 @@ logger.addHandler(console_handler)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 # 为handler设置格式
 console_handler.setFormatter(formatter)
+lambda_client = boto3.client('lambda')
 
-BACKEND_API = os.environ["BACKEND_API"]
 SECRET_KEY = os.environ["SECRET_KEY"]
-
+ASK_ASSISTANT_FUNC_ARN = os.environ["ASK_ASSISTANT_FUNC_ARN"]
 
 def convertRequest(requestParams, multiround=True):
     # using unix timestamp as msgid
@@ -62,18 +63,24 @@ def convertRequest(requestParams, multiround=True):
 
 
 def generateAnswer(convertedRequest) -> requests.Response :
-    originalResponse = requests.post(BACKEND_API, json=convertedRequest)
-    # print(originalResponse.text, type(originalResponse.text))
-    logger.debug("Original response generated: " + json.dumps(originalResponse.text))
+    
+    response = lambda_client.invoke(
+        FunctionName=ASK_ASSISTANT_FUNC_ARN,
+        InvocationType='RequestResponse',
+        Payload=json.dumps(convertedRequest).encode('utf-8') # 传递给另一个 Lambda 函数的参数
+    )
+    
+    originalResponse = response['Payload'].read().decode('utf-8')
+    logger.info(originalResponse)
     return originalResponse
 
 def convertGreetingResponse(originalResponse: requests.Response):
-    jsonOriginalResponse = json.loads(originalResponse.text)
+    jsonOriginalResponse = json.loads(originalResponse)
     text = jsonOriginalResponse["body"][0]["choices"][0]["text"]    
     convertedResponse = {
-        "flag": True if originalResponse.status_code == 200 else False,
-        "code": originalResponse.status_code,
-        "desc": "success" if originalResponse.status_code == 200 else jsonOriginalResponse["body"],
+        "flag": True if jsonOriginalResponse['statusCode'] == 200 else False,
+        "code": jsonOriginalResponse['statusCode'],
+        "desc": "success" if jsonOriginalResponse['statusCode'] == 200 else jsonOriginalResponse["body"],
         "data": [{
             "type": 0,
             "id": 0,
@@ -100,38 +107,36 @@ def generate_signature(params, secret_key):
     params['secretKey'] = secret_key
     ordered_params = OrderedDict(sorted(params.items()))
     logger.debug("Ordered params: " + str(ordered_params))
-    
+
     # 拼接有序字典的值
     values = [str(value) for value in ordered_params.values()]
     value_string = ''.join(values).strip()
     logger.debug("Value string: " + value_string)
-    
+
     # 计算MD5签名并转换为小写
     signature = hashlib.md5(value_string.encode('utf-8')).hexdigest().lower()
     logger.debug("Signature: " + signature)
-    
+
     return signature
 
 def lambda_handler(event, context):
+    logger.info(event)
     # TODO implement
-    if BACKEND_API is None or SECRET_KEY is None:
-        logger.error("Backend API or SecretKey is not set.")
+    if ASK_ASSISTANT_FUNC_ARN is None or SECRET_KEY is None:
+        logger.error("ASK_ASSISTANT_FUNC_ARN or SecretKey is not set in Enviroment.")
         failedResponse = {
             "flag": False,
             "code": 400,
-            "desc": "Backend API or SecretKey is not set.",
+            "desc": "ASK_ASSISTANT_FUNC_ARN or SecretKey is not set.",
             "data": [],
             "time": int(time.time() * 1000)
         }
-        finalResponseFailed = {
-            'statusCode': 400,
-            'body': json.dumps(failedResponse)
-        }
+        return failedResponse
+    
     sign = event["headers"]["sign"]
     logger.debug("Sign received: " + sign)
-    responseBody = json.loads(event["body"])
-    validation_dict = dict(responseBody)
-    sign2 = generate_signature(validation_dict, SECRET_KEY)
+    requestBody = event["body"]
+    sign2 = generate_signature(requestBody, SECRET_KEY)
     logger.debug("Request received. Validating...")
     if sign != sign2:
         logger.error("Signature validation failed.")
@@ -142,18 +147,10 @@ def lambda_handler(event, context):
             "data": [],
             "time": int(time.time() * 1000)
         }
-        finalResponseFailed = {
-            'statusCode': 403,
-            'body': json.dumps(failedResponse)
-        }
-        return finalResponseFailed
+        return failedResponse
     logger.debug("Signature validation passed. Generating answer...")
-    convertedRequest = convertRequest(responseBody)
+    convertedRequest = convertRequest(requestBody)
     originalResponse = generateAnswer(convertedRequest)
     convertedResponse = convertGreetingResponse(originalResponse)
     logger.debug("Final output: " + str(convertedResponse))
-    finalResponse = {
-        'statusCode': 200,
-        'body': json.dumps(convertedResponse)
-    }
-    return finalResponse
+    return convertedResponse
