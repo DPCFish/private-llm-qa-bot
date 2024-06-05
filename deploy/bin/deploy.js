@@ -2,8 +2,8 @@
 import cdk  from 'aws-cdk-lib';
 import { DeployStack } from '../lib/deploy-stack.js';
 import { FrontendCdkStack } from '../lib/frontend-cdk-stack.js';
-import pkg from '../../plugin/AI-Help-Adapter/cdk/ai-help-adapter.js';
-const { AIHelpAdapter } = pkg;
+import { AIHelpAdapter } from '../../plugin/AI-Help-Adapter/cdk/ai-help-adapter.mjs';
+
 // import { BedrockCdkStack } from '../lib/bedrock-stack.js';
 // import { GeneratorCdkStack } from '../lib/generator-stack.js';
 // import { exec } from 'child_process';
