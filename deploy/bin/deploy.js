@@ -6,6 +6,7 @@ import { FrontendCdkStack } from '../lib/frontend-cdk-stack.js';
 // import { GeneratorCdkStack } from '../lib/generator-stack.js';
 // import { exec } from 'child_process';
 import * as dotenv from 'dotenv' ;
+import { AIHelpAdapter } from '../../plugin/AI-Help-Adapter/cdk/ai-help-adapter.js';
 dotenv.config()
 
 console.log(process.env.CDK_DEFAULT_ACCOUNT,process.env.CDK_DEFAULT_REGION);
@@ -17,6 +18,10 @@ new DeployStack(app, 'QAChatDeployStack', {
 new FrontendCdkStack(app, 'ChatFrontendDeployStack', {
   env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION },
 });
+
+new AIHelpAdapter(app, 'AIHelpAdapterStack', {
+  env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION },
+})
 
 // you need to install by `npm i bedrock-agents-cdk`
 // new BedrockCdkStack(app, 'BedrockKBDeployStack', {
