@@ -1,9 +1,10 @@
 import lambda from 'aws-cdk-lib/aws-lambda';
 import apigw from 'aws-cdk-lib/aws-apigateway';
-import Stack from 'aws-cdk-lib'
+import * as iam from "aws-cdk-lib/aws-iam";
+import {Stack, CfnOutput} from 'aws-cdk-lib'
 
 
-export class AIHelpAdapter extends Stack{
+export class AIHelpAdapter extends Stack {
   /**
    *
    * @param {Construct} scope
