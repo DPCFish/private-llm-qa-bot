@@ -1,7 +1,7 @@
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as apigw from 'aws-cdk-lib/aws-apigateway';
 import * as iam from 'aws-cdk-lib/aws-iam';
-import { Stack, CfnOutput, CfnParameter } from 'aws-cdk-lib';
+import { Stack, CfnOutput, CfnParameter, Duration } from 'aws-cdk-lib';
 
 
 export class AIHelpAdapter extends Stack {
