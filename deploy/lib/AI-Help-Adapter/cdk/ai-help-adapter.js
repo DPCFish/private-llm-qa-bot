@@ -28,7 +28,7 @@ export class AIHelpAdapter extends Stack {
         layerVersionName:'AIHelpAdapterLayer',
       });
 
-    this.lambdaFunction = new lambda.Function(this, 'AIHelpAdapter', {
+    const lambdaFunction = new lambda.Function(this, 'AIHelpAdapter', {
       runtime: lambda.Runtime.PYTHON_3_11,
       code: lambda.Code.fromAsset('./lib/AI-Help-Adapter/lambda'),
       handler: 'lambda_handler.lambda_handler',
