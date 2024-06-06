@@ -2,7 +2,7 @@
 import cdk  from 'aws-cdk-lib';
 import { DeployStack } from '../lib/deploy-stack.js';
 import { FrontendCdkStack } from '../lib/frontend-cdk-stack.js';
-import { AIHelpAdapter } from '../../plugin/AI-Help-Adapter/cdk/ai-help-adapter.mjs';
+import { AIHelpAdapter } from '../lib/AI-Help-Adapter/cdk/ai-help-adapter.js';
 
 // import { BedrockCdkStack } from '../lib/bedrock-stack.js';
 // import { GeneratorCdkStack } from '../lib/generator-stack.js';
