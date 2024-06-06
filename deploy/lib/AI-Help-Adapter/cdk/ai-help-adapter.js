@@ -28,7 +28,7 @@ export class AIHelpAdapter extends Stack {
         layerVersionName:'AIHelpAdapterLayer',
       });
 
-    const lambdaFunction = new lambda.Function(scope, 'AIHelpAdapter', {
+    const lambdaFunction = new lambda.Function(this, 'AIHelpAdapter', {
       runtime: lambda.Runtime.PYTHON_3_11,
       code: lambda.Code.fromAsset('./lib/AI-Help-Adapter/lambda/lambda_handler.py'),
       handler: 'lambda_handler',
@@ -41,13 +41,13 @@ export class AIHelpAdapter extends Stack {
       memorySize: 256,
     });
 
-  lambdaFunction.addToRolePolicy(new iam.PolicyStatement({
-      actions: [ 
-        "lambda:InvokeFunction"
-        ],
-      effect: iam.Effect.ALLOW,
-      resources: ['*'],
-      }))
+    lambdaFunction.addToRolePolicy(new iam.PolicyStatement({
+        actions: [ 
+          "lambda:InvokeFunction"
+          ],
+        effect: iam.Effect.ALLOW,
+        resources: ['*'],
+        }))
 
     // 定义 API Gateway 和与 Lambda 函数的关联
     const api = new apigw.RestApi(scope, 'AI-Help-Adapter-API');
