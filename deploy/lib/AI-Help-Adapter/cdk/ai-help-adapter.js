@@ -50,7 +50,7 @@ export class AIHelpAdapter extends Stack {
         }))
 
     // 定义 API Gateway 和与 Lambda 函数的关联
-    const api = new apigw.RestApi(scope, 'AI-Help-Adapter-API');
+    const api = new apigw.RestApi(this, 'AI-Help-Adapter-API');
 
     const resource = api.root.addResource('adapter');
     resource.addMethod('POST', new apigw.LambdaIntegration(lambdaFunction, { proxy: true }), {
