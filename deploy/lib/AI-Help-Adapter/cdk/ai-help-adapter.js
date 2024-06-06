@@ -22,7 +22,7 @@ export class AIHelpAdapter extends Stack {
       });
 
     const layer = new lambda.LayerVersion(this, 'AIHelpAdapterLayer', {
-        code: lambda.Code.fromAsset('./lib/AI-Help-Adapter/lambda/layer_content.zip'),
+        code: lambda.Code.fromAsset('./lib/AI-Help-Adapter/layers/layer_content.zip'),
         description: 'AI Help Adatper Python helper utility',
         compatibleRuntimes: [lambda.Runtime.PYTHON_3_11],
         layerVersionName:'AIHelpAdapterLayer',
@@ -30,8 +30,8 @@ export class AIHelpAdapter extends Stack {
 
     const lambdaFunction = new lambda.Function(this, 'AIHelpAdapter', {
       runtime: lambda.Runtime.PYTHON_3_11,
-      code: lambda.Code.fromAsset('./lib/AI-Help-Adapter/lambda/lambda_handler.py'),
-      handler: 'lambda_handler',
+      code: lambda.Code.fromAsset('./lib/AI-Help-Adapter/lambda'),
+      handler: 'lambda_handler.lambda_handler',
       layers: [layer],
       timeout: Duration.minutes(2),
       environment: {
