@@ -3,7 +3,9 @@ import * as apigw from 'aws-cdk-lib/aws-apigateway';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import { Stack, CfnOutput, CfnParameter, Duration } from 'aws-cdk-lib';
 import * as path from 'path';
-
+import { fileURLToPath } from "url";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export class AIHelpAdapter extends Stack {
   /**
@@ -23,14 +25,38 @@ export class AIHelpAdapter extends Stack {
       });
 
     const lambdaLayerZipFilePath = '../layers/layer_content.zip';
-    const layer = new lambda.LayerVersion(this, 'AIHelpAdapterLayer', {
+    const layer = new lambda.LayerVersion(this, 'AIHelpAdapterLambdaLayer', {
       code: lambda.Code.fromAsset(path.join(__dirname, lambdaLayerZipFilePath)),
-      compatibleRuntimes: [lambda.Runtime.PYTHON_3_11],
-      description: 'AIHelpAdapterLayer',
+      compatibleRuntimes: [lambda.Runtime.PYTHON_3_10]
     });
 
+    const aiHelpAdapterLambdaRole = new iam.Role(this, 'PromptTemplateLambdaRole', {
+      roleName: `ai-help-lambda-role--${cdk.Stack.of(this).region}`,
+      assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
+      managedPolicies: [
+          iam.ManagedPolicy.fromAwsManagedPolicyName('CloudWatchFullAccess'),
+      ],
+      inlinePolicies: {
+        'LambdaInvokePolicy': new iam.PolicyDocument({
+            assignSids: true,
+            statements: [
+                new iam.PolicyStatement({
+                    effect: iam.Effect.ALLOW,
+                    actions: [
+                        'lambda:InvokeFunction'
+                    ],
+                    resources: [
+                        '*'
+                    ]
+                })
+            ]
+        })
+    }
+  });
+
+
     const lambdaFunction = new lambda.Function(this, 'AIHelpAdapter', {
-      runtime: lambda.Runtime.PYTHON_3_11,
+      runtime: lambda.Runtime.PYTHON_3_10,
       code: lambda.Code.fromAsset('./lib/AI-Help-Adapter/lambda'),
       handler: 'lambda_handler.lambda_handler',
       layers: [layer],
@@ -42,18 +68,10 @@ export class AIHelpAdapter extends Stack {
       memorySize: 256,
     });
 
-    lambdaFunction.addToRolePolicy(new iam.PolicyStatement({
-        actions: [ 
-          "lambda:InvokeFunction"
-          ],
-        effect: iam.Effect.ALLOW,
-        resources: ['*'],
-        }))
-
     // 定义 API Gateway 和与 Lambda 函数的关联
     const api = new apigw.RestApi(this, 'AI-Help-Adapter-API');
 
-    const resource = api.root.addResource('adapter');
+    const resource = api.root.addResource('adapter-aihelp');
     resource.addMethod('POST', new apigw.LambdaIntegration(lambdaFunction, { proxy: true }), {
       methodResponses: [{ statusCode: '200' }],
     });
