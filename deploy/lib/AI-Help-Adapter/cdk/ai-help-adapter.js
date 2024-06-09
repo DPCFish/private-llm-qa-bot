@@ -73,8 +73,8 @@ export class AIHelpAdapter extends Stack {
     // 定义 API Gateway 和与 Lambda 函数的关联
     const api = new apigw.RestApi(this, 'AI-Help-Adapter-API');
     const resource = api.root.addResource('adapter-aihelp');
-    const requestTemplate = apigateway.RequestTemplateMapping();
-    requestTemplate.contentHandlingStrategy = apigateway.ContentHandlingStrategy.CONVERT_TO_TEXT;
+    const requestTemplate = apigw.RequestTemplateMapping();
+    requestTemplate.contentHandlingStrategy = apigw.ContentHandlingStrategy.CONVERT_TO_TEXT;
     requestTemplate.requestTemplates = {
       'application/json': `{
         "method": "$context.httpMethod",
@@ -89,14 +89,14 @@ export class AIHelpAdapter extends Stack {
     };
 
 
-    resource.addMethod('POST', new _apigateway.LambdaIntegration(lambdaFunction, {
+    resource.addMethod('POST', new apigw.LambdaIntegration(lambdaFunction, {
       proxy: false,
       requestTemplates: requestTemplate,
       methodResponses: [
         {
           statusCode: '200',
           responseModels: {
-            'application/json': new apigateway.EmptyModel(),
+            'application/json': new apigw.EmptyModel(),
           },
         },
       ],
