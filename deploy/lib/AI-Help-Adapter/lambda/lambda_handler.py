@@ -4,7 +4,6 @@ import random
 import string
 import re
 import logging 
-import requests
 import json
 import os
 import hashlib
@@ -62,7 +61,7 @@ def convertRequest(requestParams, multiround=True):
     return convertedRequest
 
 
-def generateAnswer(convertedRequest) -> requests.Response :
+def generateAnswer(convertedRequest):
     
     response = lambda_client.invoke(
         FunctionName=ASK_ASSISTANT_FUNC_ARN,
@@ -74,7 +73,7 @@ def generateAnswer(convertedRequest) -> requests.Response :
     logger.info(originalResponse)
     return originalResponse
 
-def convertGreetingResponse(originalResponse: requests.Response):
+def convertGreetingResponse(originalResponse):
     jsonOriginalResponse = json.loads(originalResponse)
     text = jsonOriginalResponse["body"][0]["choices"][0]["text"]    
     convertedResponse = {
@@ -135,7 +134,7 @@ def lambda_handler(event, context):
     
     sign = event["headers"]["sign"]
     logger.debug("Sign received: " + sign)
-    requestBody = event["body"]
+    requestBody = json.loads(event["body"])
     sign2 = generate_signature(requestBody, SECRET_KEY)
     logger.debug("Request received. Validating...")
     if sign != sign2:

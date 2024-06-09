@@ -1,3 +1,4 @@
+import * as cdk from 'aws-cdk-lib';
 import lambda from "aws-cdk-lib/aws-lambda";
 import * as apigw from 'aws-cdk-lib/aws-apigateway';
 import * as iam from 'aws-cdk-lib/aws-iam';
@@ -59,6 +60,7 @@ export class AIHelpAdapter extends Stack {
       runtime: lambda.Runtime.PYTHON_3_10,
       code: lambda.Code.fromAsset('./lib/AI-Help-Adapter/lambda'),
       handler: 'lambda_handler.lambda_handler',
+      role:  aiHelpAdapterLambdaRole,
       layers: [layer],
       timeout: Duration.minutes(2),
       environment: {
