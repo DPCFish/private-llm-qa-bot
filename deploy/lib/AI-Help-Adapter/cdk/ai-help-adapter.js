@@ -2,6 +2,7 @@ import lambda from "aws-cdk-lib/aws-lambda";
 import * as apigw from 'aws-cdk-lib/aws-apigateway';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import { Stack, CfnOutput, CfnParameter, Duration } from 'aws-cdk-lib';
+import * as path from 'path';
 
 
 export class AIHelpAdapter extends Stack {
@@ -21,12 +22,12 @@ export class AIHelpAdapter extends Stack {
         description: 'Enter a value for SECRET_KEY',
       });
 
+    const lambdaLayerZipFilePath = '../layers/layer_content.zip';
     const layer = new lambda.LayerVersion(this, 'AIHelpAdapterLayer', {
-        code: lambda.Code.fromAsset('./lib/AI-Help-Adapter/layers/layer_content.zip'),
-        description: 'AI Help Adatper Python helper utility',
-        compatibleRuntimes: [lambda.Runtime.PYTHON_3_11],
-        layerVersionName:'AIHelpAdapterLayer',
-      });
+      code: lambda.Code.fromAsset(path.join(__dirname, lambdaLayerZipFilePath)),
+      compatibleRuntimes: [lambda.Runtime.PYTHON_3_11],
+      description: 'AIHelpAdapterLayer',
+    });
 
     const lambdaFunction = new lambda.Function(this, 'AIHelpAdapter', {
       runtime: lambda.Runtime.PYTHON_3_11,
