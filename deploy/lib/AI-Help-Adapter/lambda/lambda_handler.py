@@ -134,7 +134,7 @@ def lambda_handler(event, context):
     
     sign = event["headers"]["sign"]
     logger.debug("Sign received: " + sign)
-    requestBody = json.loads(event["body"])
+    requestBody = event["body"]
     sign2 = generate_signature(requestBody, SECRET_KEY)
     logger.debug("Request received. Validating...")
     if sign != sign2:

@@ -55,53 +55,50 @@ export class AIHelpAdapter extends Stack {
     }
   });
 
+  const lambdaFunction = new lambda.Function(this, 'AIHelpAdapter', {
+    runtime: lambda.Runtime.PYTHON_3_10,
+    code: lambda.Code.fromAsset(path.join(__dirname, '../lambda')),
+    handler: 'lambda_handler.lambda_handler',
+    role:  aiHelpAdapterLambdaRole,
+    layers: [layer],
+    timeout: Duration.minutes(2),
+    environment: {
+      SECRET_KEY: SECRET_KEY,
+      ASK_ASSISTANT_FUNC_ARN:process.env.MAIN_FUN_ARN,
+    },
+    memorySize: 256,
+  });
 
-    const lambdaFunction = new lambda.Function(this, 'AIHelpAdapter', {
-      runtime: lambda.Runtime.PYTHON_3_10,
-      code: lambda.Code.fromAsset(path.join(__dirname, '../lambda')),
-      handler: 'lambda_handler.lambda_handler',
-      role:  aiHelpAdapterLambdaRole,
-      layers: [layer],
-      timeout: Duration.minutes(2),
-      environment: {
-        SECRET_KEY: SECRET_KEY,
-        ASK_ASSISTANT_FUNC_ARN:process.env.MAIN_FUN_ARN,
-      },
-      memorySize: 256,
-    });
+  // 定义 API Gateway 和与 Lambda 函数的关联
+  const api = new apigw.RestApi(this, 'AI-Help-Adapter-API');
+  const resource = api.root.addResource('adapter-aihelp');
 
-    // 定义 API Gateway 和与 Lambda 函数的关联
-    const api = new apigw.RestApi(this, 'AI-Help-Adapter-API');
-    const resource = api.root.addResource('adapter-aihelp');
-    const requestTemplate = apigw.RequestTemplateMapping();
-    requestTemplate.contentHandlingStrategy = apigw.ContentHandlingStrategy.CONVERT_TO_TEXT;
-    requestTemplate.requestTemplates = {
-      'application/json': `{
-        "method": "$context.httpMethod",
-        "body" : $input.json('$'),
-        "headers": {
-          #foreach($param in $input.params().header.keySet())
-          "$param": "$util.escapeJavaScript($input.params().header.get($param))"
-          #if($foreach.hasNext),#end
-          #end
-        }
-      }`
-    };
-
-
-    resource.addMethod('POST', new apigw.LambdaIntegration(lambdaFunction, {
-      proxy: false,
-      requestTemplates: requestTemplate,
-      methodResponses: [
-        {
-          statusCode: '200',
-          responseModels: {
-            'application/json': new apigw.EmptyModel(),
-          },
+  resource.addMethod('POST', new apigw.LambdaIntegration(lambdaFunction, {
+    proxy: false,
+    requestTemplates: {
+      'application/json':`{
+      "method": "$context.httpMethod",
+      "body" : $input.json('$'),
+      "headers": {
+        #foreach($param in $input.params().header.keySet())
+        "$param": "$util.escapeJavaScript($input.params().header.get($param))"
+        #if($foreach.hasNext),#end
+        #end
+      }
+    }`
+    },
+    integrationResponses: [
+      { statusCode: '200',
+        responseModels: {
+          'application/json': new apigw.EmptyModel(),
         },
-      ],
-    }));
-    this.endpoint = api.url;
-    new CfnOutput(this, `AI Help Adapter endpoint url`,{value:`${api.url}`});
+      },
+    ],
+  }),{
+    methodResponses: [{ statusCode: '200' }],
+  });
+  this.endpoint = api.url;
+  new CfnOutput(this, `AI Help Adapter endpoint url`,{value:`${api.url}`});
+    
   }
 }
