@@ -58,7 +58,7 @@ export class AIHelpAdapter extends Stack {
 
     const lambdaFunction = new lambda.Function(this, 'AIHelpAdapter', {
       runtime: lambda.Runtime.PYTHON_3_10,
-      code: lambda.Code.fromAsset('./lib/AI-Help-Adapter/lambda'),
+      code: lambda.Code.fromAsset(path.join(__dirname, '../lambda')),
       handler: 'lambda_handler.lambda_handler',
       role:  aiHelpAdapterLambdaRole,
       layers: [layer],
@@ -72,11 +72,8 @@ export class AIHelpAdapter extends Stack {
 
     // 定义 API Gateway 和与 Lambda 函数的关联
     const api = new apigw.RestApi(this, 'AI-Help-Adapter-API');
-
     const resource = api.root.addResource('adapter-aihelp');
-    resource.addMethod('POST', new apigw.LambdaIntegration(lambdaFunction, { proxy: true }), {
-      methodResponses: [{ statusCode: '200' }],
-    });
+    resource.addMethod('POST', new _apigateway.LambdaIntegration(lambdaFunction));
     this.endpoint = api.url;
     new CfnOutput(this, `AI Help Adapter endpoint url`,{value:`${api.url}`});
   }
