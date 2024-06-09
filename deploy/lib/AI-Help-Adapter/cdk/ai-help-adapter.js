@@ -73,7 +73,34 @@ export class AIHelpAdapter extends Stack {
     // 定义 API Gateway 和与 Lambda 函数的关联
     const api = new apigw.RestApi(this, 'AI-Help-Adapter-API');
     const resource = api.root.addResource('adapter-aihelp');
-    resource.addMethod('POST', new _apigateway.LambdaIntegration(lambdaFunction));
+    const requestTemplate = apigateway.RequestTemplateMapping();
+    requestTemplate.contentHandlingStrategy = apigateway.ContentHandlingStrategy.CONVERT_TO_TEXT;
+    requestTemplate.requestTemplates = {
+      'application/json': `{
+        "method": "$context.httpMethod",
+        "body" : $input.json('$'),
+        "headers": {
+          #foreach($param in $input.params().header.keySet())
+          "$param": "$util.escapeJavaScript($input.params().header.get($param))"
+          #if($foreach.hasNext),#end
+          #end
+        }
+      }`
+    };
+
+
+    resource.addMethod('POST', new _apigateway.LambdaIntegration(lambdaFunction, {
+      proxy: false,
+      requestTemplates: requestTemplate,
+      methodResponses: [
+        {
+          statusCode: '200',
+          responseModels: {
+            'application/json': new apigateway.EmptyModel(),
+          },
+        },
+      ],
+    }));
     this.endpoint = api.url;
     new CfnOutput(this, `AI Help Adapter endpoint url`,{value:`${api.url}`});
   }
